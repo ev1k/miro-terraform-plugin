@@ -26,15 +26,36 @@ def get_props():
     instanceType = request.values.get('instanceType')
     region = request.values.get('region')
     res = find_instance_props(resource_data, instanceType, region)
-   
+    if (res == None):
+        abort(404)
+    
     response = app.response_class(
-
         response= json.dumps(res),
         mimetype='application/json'
     )
     return response
 
+@app.route('/calc_total_price', methods=['POST']) 
+def calc_total_price():
+    app.logger.debug(str(request.json))
+    res = find_total_price(request.json)
+    response = app.response_class(
+        response= json.dumps(res),
+        mimetype='application/json'
+    )
+    return response
 
+def find_total_price(instances):
+    total_price = 0
+    for instance in instances:
+        props = find_instance_props(resource_data, instance['instanceType'], instance['region'])
+        if (props == None):
+            continue
+        total_price = total_price + props['price']
+    ret = {"total_price": total_price}    
+    return ret    
+        
+    
 
 def find_instance_props(json_object, instanceType, region):
     ret = None
@@ -42,7 +63,7 @@ def find_instance_props(json_object, instanceType, region):
         if (node['instanceType'] == instanceType and node['region'] == region):
             ret = node
     if (ret == None):
-        abort(404)
+        return None
     copied = copy.deepcopy(ret)
     del copied['instanceType']
     del copied['region']
@@ -56,7 +77,7 @@ def parse():
 
 @app.route('/parse_test', methods=['POST']) 
 def parse_test():
-    data = '''"graphs": [
+    data = '''{"graphs": [
     {
       "directed": true,
       "type": "graph type",
