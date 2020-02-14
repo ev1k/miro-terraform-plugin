@@ -2,3 +2,4 @@
 *.iml
 server/__pycache__/
 
+server/*.tf

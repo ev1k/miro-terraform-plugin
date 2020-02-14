@@ -1,6 +1,7 @@
 import hcl2
 import os
 import json
+from pprint import pprint
 from server.entities import *
 from lark.exceptions import UnexpectedToken
 
@@ -10,7 +11,7 @@ class Parser:
         self.resources = None
         self.all_objects = dict()
         self.top_objects = list()
-        self.resource_types = list()
+        self.unknown_resource_types = list()
         self.walked_resources = dict()
         self.walked_resources_reverse_index = dict()
         self.variables = None
@@ -311,6 +312,13 @@ class Parser:
 
         listener.connect(target_group)
 
+    def walk_s3_bucket(self, name, props):
+        print("Walking on S3 bucket" + name)
+
+        bucket = self.read_prop(props, 'bucket', None)
+        obj = AwsS3Bucket(name, bucket)
+        self.place_resource(RT_LB_LISTENER, name, obj)
+
     def walk_resource(self, resource_type, resource_name):
         if self.is_resource_walked(resource_type, resource_name):
             print("Already processed " + resource_type + " -> " + resource_name)
@@ -331,8 +339,11 @@ class Parser:
             self.walk_lb_listener(resource_name, resource_props)
         elif resource_type == RT_LB_LISTENER_RULE:
             self.walk_lb_listener_rule(resource_name, resource_props)
+        elif resource_type == RT_S3_BUCKET:
+            self.walk_s3_bucket(resource_name, resource_props)
 
         else:
+            self.add_unique(self.unknown_resource_types, resource_type)
             print("Unknown resource type, skipping")
 
     def walk_resources(self):
@@ -342,20 +353,23 @@ class Parser:
                     self.walk_resource(resource_type, resource_name)
 
 
-#p = Parser()
-#dirs = [
-    # '/Users/edro/work/iac/terraform/live/env_prod/provider_aws/account_prod/region_eu-west-1/vpc_prod/hazelcast_prod',
-    # '/Users/edro/work/iac/terraform/global/modules/hazelcast',
-   # '/Users/edro/work/miro-terraform-plugin/server'
-#]
+if __name__ == '__main__':
+    p = Parser()
+    dirs = [
+        # '/Users/edro/work/iac/terraform/live/env_prod/provider_aws/account_prod/region_eu-west-1/vpc_prod/hazelcast_prod',
+        # '/Users/edro/work/iac/terraform/global/modules/hazelcast',
+        '/Users/edro/work/miro-terraform-plugin/server'
+    ]
 
-#g = p.run(dirs)
+    g = p.run_dirs(dirs)
+    print(json.dumps(g, default=p.dumper, indent=2))
 
+    pprint(p.unknown_resource_types)
 
-# for instance_name, instance_props in all_objects["resource"]['aws_instance'].items():
-#    print(instance_name, instance_props)
+    # for instance_name, instance_props in all_objects["resource"]['aws_instance'].items():
+    #    print(instance_name, instance_props)
 
-#print(json.dumps(g, default=Parser.dumper, indent=2))
+    #print(json.dumps(g, default=Parser.dumper, indent=2))
 
-# print(json.dumps(resource_types, default=dumper, indent=4))
-# print(json.dumps(top_objects, default=dumper, indent=4))
+    # print(json.dumps(resource_types, default=dumper, indent=4))
+    # print(json.dumps(top_objects, default=dumper, indent=4))

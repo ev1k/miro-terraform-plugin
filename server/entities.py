@@ -5,6 +5,7 @@ RT_LB_TG = "aws_lb_target_group"
 RT_LB_TG_ATTACHMENT = "aws_lb_target_group_attachment"
 RT_LB_LISTENER = "aws_lb_listener"
 RT_LB_LISTENER_RULE = "aws_lb_listener_rule"
+RT_S3_BUCKET = "aws_s3_bucket"
 
 
 class TfResource:
@@ -105,3 +106,17 @@ class AwsLbListener(TfResource):
             'default_action_type': self.default_action_type,
         }
 
+
+class AwsS3Bucket(TfResource):
+    def __init__(self, name, bucket):
+        super().__init__(name)
+        self.bucket = bucket
+
+    def __repr__(self):
+        return "AwsS3Bucket " + str(self.name) + " (" + str(self.bucket) + ")"
+
+    def as_dict(self):
+        return {
+            'name': self.name,
+            'bucket': self.bucket
+        }
