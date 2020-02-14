@@ -1,0 +1,13 @@
+POST http://0.0.0.0:5000/parse
+Content-Type: application/json
+
+{"data": ""}
+
+###
+
+POST http://0.0.0.0:5000/parse
+Content-Type: application/json
+
+{"data": "resource \"aws_lb\" \"this\" {\n  name = \"web-app\"\n  internal = false\n  load_balancer_type = \"application\"\n  subnets = \"subnet-123\"\n  security_groups = [\n    \"sg-123\"]\n  idle_timeout = 1800\n  enable_http2 = true\n  enable_deletion_protection = false\n}\n\nresource \"aws_lb_listener\" \"this\" {\n  load_balancer_arn = aws_lb.this.arn\n  port = \"80\"\n  protocol = \"HTTP\"\n  default_action {\n    type = \"forward\"\n    target_group_arn = aws_lb_target_group.this.arn\n  }\n}\n\nresource \"aws_lb_target_group\" \"this\" {\n  vpc_id = \"vpc-123\"\n  port = 443\n  protocol = \"HTTPS\"\n  target_type = \"instance\"\n}\n\nresource \"aws_lb_target_group_attachment\" \"this\" {\n  count = 3\n  target_group_arn = aws_lb_target_group.this.arn\n  target_id = aws_instance.this[count.index].id\n  port = 443\n}\n\nresource \"aws_instance\" \"this\" {\n  count = 3\n  ami = \"ami-123\"\n  instance_type = \"c5.large\"\n  availability_zone = \"us-east-1a\"\n  subnet_id = \"subnet-123\"\n  vpc_security_group_ids = [\n    \"sg-123\"]\n  root_block_device {\n    volume_size = 20\n  }\n}\n\nresource \"aws_lb_listener_rule\" \"custom\" {\n  listener_arn = aws_lb_listener.this.arn\n  type = \"forward\"\n  target_group_arn = aws_lb_target_group.custom.arn\n}\n\nresource \"aws_lb_target_group\" \"custom\" {\n  vpc_id = \"vpc-123\"\n  port = 443\n  protocol = \"HTTPS\"\n  target_type = \"instance\"\n}\n\nresource \"aws_lb_target_group_attachment\" \"custom\" {\n  count = 1\n  target_group_arn = aws_lb_target_group.custom.arn\n  target_id = aws_instance.custom[count.index].id\n  port = 443\n}\n\nresource \"aws_instance\" \"custom\" {\n  count = 1\n  ami = \"ami-456\"\n  instance_type = \"m5.large\"\n  availability_zone = \"us-east-1a\"\n  subnet_id = \"subnet-456\"\n  vpc_security_group_ids = [\n    \"sg-456\"]\n  root_block_device {\n    volume_size = 20\n  }\n}"}
+
+###

@@ -2,18 +2,24 @@ from flask import Flask, request, jsonify, abort
 from flask_cors import CORS
 import copy
 import json
-from pprint import pprint
 
+from server.hcl_parser import Parser
+from pprint import pprint
 
 app = Flask(__name__)
 CORS(app)
 resource_data = ''
-@app.route('/reload_resources', methods=['GET']) 
+
+
+@app.route('/reload_resources', methods=['GET'])
 def reload_resources():
     with open('resources.json') as f:
         global resource_data
         resource_data = json.load(f)
-reload_resources()
+
+
+#reload_resources()
+
 
 @app.before_request
 def log_request_info():
@@ -21,29 +27,32 @@ def log_request_info():
     app.logger.debug('Body: %s', request.get_data())
     app.logger.debug(request)
 
-@app.route('/get_props', methods=['GET']) 
+
+@app.route('/get_props', methods=['GET'])
 def get_props():
     instanceType = request.values.get('instanceType')
     region = request.values.get('region')
     res = find_instance_props(resource_data, instanceType, region)
     if (res == None):
         abort(404)
-    
+
     response = app.response_class(
-        response= json.dumps(res),
+        response=json.dumps(res),
         mimetype='application/json'
     )
     return response
 
-@app.route('/calc_total_price', methods=['POST']) 
+
+@app.route('/calc_total_price', methods=['POST'])
 def calc_total_price():
     app.logger.debug(str(request.json))
     res = find_total_price(request.json)
     response = app.response_class(
-        response= json.dumps(res),
+        response=json.dumps(res),
         mimetype='application/json'
     )
     return response
+
 
 def find_total_price(instances):
     total_price = 0
@@ -52,10 +61,9 @@ def find_total_price(instances):
         if (props == None):
             continue
         total_price = total_price + props['price']
-    ret = {"total_price": total_price}    
-    return ret    
-        
-    
+    ret = {"total_price": total_price}
+    return ret
+
 
 def find_instance_props(json_object, instanceType, region):
     ret = None
@@ -67,15 +75,19 @@ def find_instance_props(json_object, instanceType, region):
     copied = copy.deepcopy(ret)
     del copied['instanceType']
     del copied['region']
-    return copied      
+    return copied
 
-@app.route('/parse', methods=['POST']) 
+
+@app.route('/parse', methods=['POST'])
 def parse():
-    print(request)
     content = request.json
-    return content
 
-@app.route('/parse_test', methods=['POST']) 
+    parser = Parser()
+    result = parser.run_text(content["data"])
+    return result
+
+
+@app.route('/parse_test', methods=['POST'])
 def parse_test():
     data = '''{"graphs": [
     {
@@ -267,5 +279,6 @@ def parse_test():
     )
     return response
 
+
 if __name__ == '__main__':
-    app.run(debug = True, host = '0.0.0.0')
+    app.run(debug=True, host='0.0.0.0')
