@@ -18,7 +18,7 @@ def reload_resources():
         resource_data = json.load(f)
 
 
-#reload_resources()
+reload_resources()
 
 
 @app.before_request
