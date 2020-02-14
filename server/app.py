@@ -83,7 +83,8 @@ def parse():
     content = request.json
 
     parser = Parser()
-    result = parser.run_text(content["data"])
+    data = content["data"].replace("\r\n", "\n")
+    result = parser.get_graph(data)
     return result
 
 

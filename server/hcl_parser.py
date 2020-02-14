@@ -2,6 +2,7 @@ import hcl2
 import os
 import json
 from server.entities import *
+from lark.exceptions import UnexpectedToken
 
 
 class Parser:
@@ -18,13 +19,22 @@ class Parser:
         for d in directories:
             self.load_dir(d)
 
-        return self.process()
+        return self.run_walker()
 
-    def run_text(self, text):
-        self.load_text(text)
-        return self.process()
+    def get_graph(self, text):
+        try:
+            self.load_text(text)
+            result = self.run_walker()
+        except UnexpectedToken as e:
+            result = {
+                "error": e.args,
+                "line": e.line,
+                "colunmn": e.column
+            }
 
-    def process(self):
+        return result
+
+    def run_walker(self):
         self.collect_vars()
         self.resources = self.safe_get(self.all_objects, 'resource')
         self.walk_resources()
